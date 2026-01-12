@@ -1,23 +1,37 @@
 # tcp_chat_client.py
 import socket
-
-client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+import threading
 
 server_host = "127.0.0.1"
 server_port = 65432
 
+client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client_socket.connect((server_host, server_port))
 print("Connected to server")
 
+
+def receive_messages():
+    while True:
+        try:
+            data = client_socket.recv(1024).decode()
+            if not data:
+                break
+            print(f"\nServer: {data}")
+        except:
+            break
+
+
+# Thread to receive messages
+threading.Thread(target=receive_messages, daemon=True).start()
+
+# Main thread handles sending
 try:
     while True:
         msg = input("You: ")
-        client_socket.send(msg.encode())
-        data = client_socket.recv(1024).decode()
-        if not data:
+        if msg.lower() == "exit":
             break
-        print(f"Server: {data}")
+        client_socket.send(msg.encode())
 except KeyboardInterrupt:
-    print("\nClient closed by user")
+    print("\nClient closed")
 finally:
     client_socket.close()
